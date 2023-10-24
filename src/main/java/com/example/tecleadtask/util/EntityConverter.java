@@ -9,12 +9,12 @@ import lombok.NoArgsConstructor;
 public class EntityConverter {
 
     public static final User convertFromUserDTO(UserDTO userDTO){
-        var user = new User();
-        user.setId(userDTO.id());
-        user.setName(userDTO.name());
-        user.setVorname(userDTO.vorName());
-        user.setEMail(userDTO.eMail());
-        return user;
+        return User.builder()
+                .id(userDTO.id())
+                .name(userDTO.name())
+                .vorname(userDTO.vorName())
+                .eMail(userDTO.eMail())
+                .build();
     }
 
     public static final UserDTO convertFromUserEntity(User user){

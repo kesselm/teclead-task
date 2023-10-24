@@ -127,10 +127,12 @@ public class UserController {
     public ResponseEntity<UserDTO> updateBank(@RequestBody UserDTO userDTO) {
         Optional<User> userOptional = userService.findUserById(userDTO.id());
         if (userOptional.isPresent()) {
-            User oldUser = new User();
-            oldUser.setId(userDTO.id());
-            oldUser.setName(userDTO.name());
-            oldUser.setVorname(userDTO.vorName());
+            var oldUser = User.builder()
+                    .id(userDTO.id())
+                    .name(userDTO.name())
+                    .vorname(userDTO.vorName())
+                    .eMail(userDTO.eMail())
+                    .build();
             User newUser = userService.saveUser(oldUser);
             UserDTO newUserDTO = EntityConverter.convertFromUserEntity(newUser);
             return new ResponseEntity<>(newUserDTO, HttpStatus.OK);
