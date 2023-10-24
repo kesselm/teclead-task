@@ -1,7 +1,7 @@
 package com.example.tecleadtask.controller;
 
 import com.example.tecleadtask.controllers.UserController;
-import com.example.tecleadtask.dao.UserDAO;
+import com.example.tecleadtask.dto.UserDTO;
 import com.example.tecleadtask.services.UserService;
 import com.example.tecleadtask.util.ApiConstants;
 import com.example.tecleadtask.util.DummyUserEntity;
@@ -16,7 +16,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -62,12 +61,12 @@ class UserControllerTest {
     void saveBankTest() throws Exception {
 
         when(userServiceMock.saveUser(any())).thenReturn(DummyUserEntity.createUserEntity());
-        UserDAO userDAO = EntityConverter.convertFromUserEntity(DummyUserEntity.createUserEntity());
+        UserDTO userDTO = EntityConverter.convertFromUserEntity(DummyUserEntity.createUserEntity());
         mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         mapper.registerModule(new JavaTimeModule());
 
         mockMvc.perform(post(ApiConstants.SAVE_USER)
-                        .content(mapper.writeValueAsString(userDAO))
+                        .content(mapper.writeValueAsString(userDTO))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isCreated())
                 .andExpectAll(
@@ -92,7 +91,7 @@ class UserControllerTest {
     @Test
     @DisplayName("The attribute name is empty and the response should be 'bad request'.")
     void saveUserValidationEmptyNameField() throws Exception {
-        var userDAO = new UserDAO(1L, "Keßel", "", "info@example.com");
+        var userDAO = new UserDTO(1L, "Keßel", "", "info@example.com");
 
         mockMvc.perform(post(ApiConstants.SAVE_USER)
                         .content(TestUtil.asJsonString(userDAO))
@@ -103,7 +102,7 @@ class UserControllerTest {
     @Test
     @DisplayName("The attribute email is empty and the response should be 'created'.")
     void saveUserValidationEmptyEmailField() throws Exception {
-        var userDAO = new UserDAO(1L, "Keßel", "Keßel", "");
+        var userDAO = new UserDTO(1L, "Keßel", "Keßel", "");
 
         when(userServiceMock.saveUser(any())).thenReturn(DummyUserEntity.createUserEntity());
 
@@ -116,7 +115,7 @@ class UserControllerTest {
     @Test
     @DisplayName("The email address is wrong written and the response should be 'bad request'.")
     void saveUserValidationWrongEmailField() throws Exception {
-        var userDAO = new UserDAO(1L, "Keßel", "Keßel", "example.com");
+        var userDAO = new UserDTO(1L, "Keßel", "Keßel", "example.com");
 
         mockMvc.perform(post(ApiConstants.SAVE_USER)
                         .content(TestUtil.asJsonString(userDAO))
@@ -187,12 +186,12 @@ class UserControllerTest {
     @Test
     @DisplayName("SuResponse should be 'no content'.")
     void deleteUserTest() throws Exception{
-        UserDAO userDAO = EntityConverter.convertFromUserEntity(DummyUserEntity.createUserEntity());
+        UserDTO userDTO = EntityConverter.convertFromUserEntity(DummyUserEntity.createUserEntity());
 
         doNothing().when(userServiceMock).deleteUser(any());
 
         mockMvc.perform(delete(ApiConstants.DELETE_USER)
-                        .content(mapper.writeValueAsString(userDAO))
+                        .content(mapper.writeValueAsString(userDTO))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
     }
@@ -200,12 +199,12 @@ class UserControllerTest {
     @Test
     @DisplayName("Response should be 'no content'.")
     void deleteUserByIdTest() throws Exception{
-        UserDAO userDAO = EntityConverter.convertFromUserEntity(DummyUserEntity.createUserEntity());
+        UserDTO userDTO = EntityConverter.convertFromUserEntity(DummyUserEntity.createUserEntity());
 
         doNothing().when(userServiceMock).deleteUser(any());
 
         mockMvc.perform(delete(ApiConstants.DELETE_USER_BY_ID,1)
-                        .content(mapper.writeValueAsString(userDAO))
+                        .content(mapper.writeValueAsString(userDTO))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
     }
@@ -213,13 +212,13 @@ class UserControllerTest {
     @Test
     @DisplayName("User should be updated and the response should be 'ok'.")
     void updateUserTest() throws Exception {
-        UserDAO userDAO = EntityConverter.convertFromUserEntity(DummyUserEntity.createUserEntity());
+        UserDTO userDTO = EntityConverter.convertFromUserEntity(DummyUserEntity.createUserEntity());
 
         when(userServiceMock.findUserById(any())).thenReturn(Optional.of(DummyUserEntity.createUserEntity()));
         when(userServiceMock.saveUser(any())).thenReturn(DummyUserEntity.createUserEntity());
 
         mockMvc.perform(put(ApiConstants.UPDATE_USER)
-                        .content(mapper.writeValueAsString(userDAO))
+                        .content(mapper.writeValueAsString(userDTO))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
     }
@@ -227,13 +226,13 @@ class UserControllerTest {
     @Test
     @DisplayName("No user object could be updated and the response should be 'no content'.")
     void updateUserWithEmptyObject() throws Exception {
-        UserDAO userDAO = EntityConverter.convertFromUserEntity(DummyUserEntity.createUserEntity());
+        UserDTO userDTO = EntityConverter.convertFromUserEntity(DummyUserEntity.createUserEntity());
 
         when(userServiceMock.findUserById(any())).thenReturn(Optional.empty());
         when(userServiceMock.saveUser(any())).thenReturn(DummyUserEntity.createUserEntity());
 
         mockMvc.perform(put(ApiConstants.UPDATE_USER)
-                        .content(mapper.writeValueAsString(userDAO))
+                        .content(mapper.writeValueAsString(userDTO))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNoContent());
     }

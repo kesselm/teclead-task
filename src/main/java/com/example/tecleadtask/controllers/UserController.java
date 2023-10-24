@@ -1,6 +1,6 @@
 package com.example.tecleadtask.controllers;
 
-import com.example.tecleadtask.dao.UserDAO;
+import com.example.tecleadtask.dto.UserDTO;
 import com.example.tecleadtask.entities.User;
 import com.example.tecleadtask.services.UserService;
 import com.example.tecleadtask.util.ApiConstants;
@@ -40,13 +40,13 @@ public class UserController {
             description = "Create a new user entity."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "201", content = {@Content(schema = @Schema(implementation = UserDAO.class), mediaType = "application/json")}),
+            @ApiResponse(responseCode = "201", content = {@Content(schema = @Schema(implementation = UserDTO.class), mediaType = "application/json")}),
             @ApiResponse(responseCode = "400", content = {@Content(schema = @Schema())})
     })
     @PostMapping(ApiConstants.SAVE_USER)
     @ResponseStatus(HttpStatus.CREATED)
-    public UserDAO saveUser(@Valid @RequestBody UserDAO userDAO) {
-        User user = userService.saveUser(EntityConverter.convertFromUserDAO(userDAO));
+    public UserDTO saveUser(@Valid @RequestBody UserDTO userDTO) {
+        User user = userService.saveUser(EntityConverter.convertFromUserDTO(userDTO));
         return EntityConverter.convertFromUserEntity(user);
     }
 
@@ -56,18 +56,18 @@ public class UserController {
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", content = {@Content(array = @ArraySchema(
-                    schema = @Schema(implementation = UserDAO.class)), mediaType = "application/json")}),
+                    schema = @Schema(implementation = UserDTO.class)), mediaType = "application/json")}),
             @ApiResponse(responseCode = "204", content = {@Content(schema = @Schema())})
     })
     @GetMapping(ApiConstants.GET_USERS)
-    public ResponseEntity<List<UserDAO>> findAllUsers() {
-        List<UserDAO> userDAOS = userService.findAllUsers()
+    public ResponseEntity<List<UserDTO>> findAllUsers() {
+        List<UserDTO> userDTOS = userService.findAllUsers()
                 .stream().map(EntityConverter::convertFromUserEntity)
                 .toList();
-        if (!userDAOS.isEmpty()) {
-            return new ResponseEntity<>(userDAOS, HttpStatus.OK);
+        if (!userDTOS.isEmpty()) {
+            return new ResponseEntity<>(userDTOS, HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(userDAOS, HttpStatus.NO_CONTENT);
+            return new ResponseEntity<>(userDTOS, HttpStatus.NO_CONTENT);
         }
     }
 
@@ -76,11 +76,11 @@ public class UserController {
             description = "Get a bank account by identifier."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", content = {@Content(schema = @Schema(implementation = UserDAO.class), mediaType = "application/json")}),
+            @ApiResponse(responseCode = "200", content = {@Content(schema = @Schema(implementation = UserDTO.class), mediaType = "application/json")}),
             @ApiResponse(responseCode = "204", content = {@Content(schema = @Schema())})
     })
     @GetMapping(ApiConstants.FIND_USER_BY_ID)
-    public ResponseEntity<UserDAO> findUserById(@PathVariable Long id) {
+    public ResponseEntity<UserDTO> findUserById(@PathVariable Long id) {
         Optional<User> user = userService.findUserById(id);
 
         if (user.isPresent()) {
@@ -95,11 +95,11 @@ public class UserController {
             description = "Delete a user."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", content = {@Content(schema = @Schema(implementation = UserDAO.class), mediaType = "application/json")})
+            @ApiResponse(responseCode = "200", content = {@Content(schema = @Schema(implementation = UserDTO.class), mediaType = "application/json")})
     })
     @DeleteMapping(ApiConstants.DELETE_USER)
-    public void deleteBank(@RequestBody UserDAO userDAO) {
-        userService.deleteUser(EntityConverter.convertFromUserDAO(userDAO));
+    public void deleteBank(@RequestBody UserDTO userDTO) {
+        userService.deleteUser(EntityConverter.convertFromUserDTO(userDTO));
     }
 
     @Operation(
@@ -107,7 +107,7 @@ public class UserController {
             description = "Delete a user by identifier."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", content = {@Content(schema = @Schema(implementation = UserDAO.class), mediaType = "application/json")})
+            @ApiResponse(responseCode = "200", content = {@Content(schema = @Schema(implementation = UserDTO.class), mediaType = "application/json")})
     })
     @DeleteMapping(ApiConstants.DELETE_USER_BY_ID)
     public void deleteBankById(@PathVariable Long id) {
@@ -120,20 +120,20 @@ public class UserController {
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", content = {@Content(schema =
-            @Schema(implementation = UserDAO.class), mediaType = "application/json")}),
+            @Schema(implementation = UserDTO.class), mediaType = "application/json")}),
             @ApiResponse(responseCode = "204", content = {@Content(schema = @Schema())})
     })
     @PutMapping(ApiConstants.UPDATE_USER)
-    public ResponseEntity<UserDAO> updateBank(@RequestBody UserDAO userDAO) {
-        Optional<User> userOptional = userService.findUserById(userDAO.id());
+    public ResponseEntity<UserDTO> updateBank(@RequestBody UserDTO userDTO) {
+        Optional<User> userOptional = userService.findUserById(userDTO.id());
         if (userOptional.isPresent()) {
             User oldUser = new User();
-            oldUser.setId(userDAO.id());
-            oldUser.setName(userDAO.name());
-            oldUser.setVorname(userDAO.vorName());
+            oldUser.setId(userDTO.id());
+            oldUser.setName(userDTO.name());
+            oldUser.setVorname(userDTO.vorName());
             User newUser = userService.saveUser(oldUser);
-            UserDAO newUserDAO = EntityConverter.convertFromUserEntity(newUser);
-            return new ResponseEntity<>(newUserDAO, HttpStatus.OK);
+            UserDTO newUserDTO = EntityConverter.convertFromUserEntity(newUser);
+            return new ResponseEntity<>(newUserDTO, HttpStatus.OK);
         } else {
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         }
@@ -145,14 +145,14 @@ public class UserController {
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", content = {@Content(array = @ArraySchema(
-                    schema = @Schema(implementation = UserDAO.class)), mediaType = "application/json")}),
+                    schema = @Schema(implementation = UserDTO.class)), mediaType = "application/json")}),
             @ApiResponse(responseCode = "204", content = {@Content(schema = @Schema())})
     })
     @GetMapping(ApiConstants.FIND_USER_BY_VORNAME)
-    public ResponseEntity<List<UserDAO>> getAllKonten(@RequestParam("vorname") String vorname) {
+    public ResponseEntity<List<UserDTO>> getAllKonten(@RequestParam("vorname") String vorname) {
         List<User> users = userService.findByVorname(vorname);
         if (!users.isEmpty()) {
-            List<UserDAO> kontenDAO = users.stream().map(EntityConverter::convertFromUserEntity)
+            List<UserDTO> kontenDAO = users.stream().map(EntityConverter::convertFromUserEntity)
                     .toList();
             return new ResponseEntity<>(kontenDAO, HttpStatus.OK);
         } else {
