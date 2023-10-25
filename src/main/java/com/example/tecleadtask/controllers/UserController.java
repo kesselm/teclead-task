@@ -40,9 +40,10 @@ public class UserController {
             summary = "Create a new user entity.",
             description = "Create a new user entity.",
             responses = {
-                    @ApiResponse(responseCode = "400", description = "Die Anfrage ist ungültig."),
-                    @ApiResponse(responseCode = "201", description = "Eine neue Resource wurde gemäß Anfrage erstellt.",
+                    @ApiResponse(responseCode = "201", description = "Created",
                             content = {@Content(schema = @Schema(implementation = UserDTO.class), mediaType = "application/json")}),
+                    @ApiResponse(responseCode = "400", description = "Bad Request"),
+                    @ApiResponse(responseCode = "500", description = "Server Error"),
             })
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping(ApiConstants.SAVE_USER)
@@ -161,18 +162,5 @@ public class UserController {
         } else {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
-    }
-
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    @ExceptionHandler({MethodArgumentNotValidException.class, EntityExistsException.class})
-    public Map<String, String> handleValidationExceptions(
-            MethodArgumentNotValidException ex) {
-        Map<String, String> errors = new HashMap<>();
-        ex.getBindingResult().getAllErrors().forEach(error -> {
-            String fieldName = ((FieldError) error).getField();
-            String errorMessage = error.getDefaultMessage();
-            errors.put(fieldName, errorMessage);
-        });
-        return errors;
     }
 }

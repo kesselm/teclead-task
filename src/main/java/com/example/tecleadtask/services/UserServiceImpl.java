@@ -1,6 +1,7 @@
 package com.example.tecleadtask.services;
 
 import com.example.tecleadtask.entities.User;
+import com.example.tecleadtask.exception.UserAppException;
 import com.example.tecleadtask.repositories.UserRepository;
 import jakarta.persistence.EntityExistsException;
 import lombok.extern.slf4j.Slf4j;
@@ -37,7 +38,11 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Optional<User> findUserById(Long id) {
-        return userRepository.findById(id);
+        if(id == null){
+            throw new UserAppException("Id for user object is missing.");
+        } else {
+            return userRepository.findById(id);
+        }
     }
 
     @Override

@@ -90,7 +90,7 @@ class UserControllerTest {
 
     @Test
     @DisplayName("The attribute name is empty and the response should be 'bad request'.")
-    void saveUserValidationEmptyNameField() throws Exception {
+    void saveUserValidationEmptyVornameField() throws Exception {
         var userDAO = new UserDTO(1L, "Keßel", "", "info@example.com");
 
         mockMvc.perform(post(ApiConstants.SAVE_USER)
