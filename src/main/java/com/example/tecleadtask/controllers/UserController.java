@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.persistence.EntityExistsException;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -37,17 +38,17 @@ public class UserController {
 
     @Operation(
             summary = "Create a new user entity.",
-            description = "Create a new user entity."
-    )
-    @ApiResponses({
-            @ApiResponse(responseCode = "201", content = {@Content(schema = @Schema(implementation = UserDTO.class), mediaType = "application/json")}),
-            @ApiResponse(responseCode = "400", content = {@Content(schema = @Schema())})
-    })
-    @PostMapping(ApiConstants.SAVE_USER)
+            description = "Create a new user entity.",
+            responses = {
+                    @ApiResponse(responseCode = "400", description = "Die Anfrage ist ungültig."),
+                    @ApiResponse(responseCode = "201", description = "Eine neue Resource wurde gemäß Anfrage erstellt.",
+                            content = {@Content(schema = @Schema(implementation = UserDTO.class), mediaType = "application/json")}),
+            })
     @ResponseStatus(HttpStatus.CREATED)
+    @PostMapping(ApiConstants.SAVE_USER)
     public UserDTO saveUser(@Valid @RequestBody UserDTO userDTO) {
-        User user = userService.saveUser(EntityConverter.convertFromUserDTO(userDTO));
-        return EntityConverter.convertFromUserEntity(user);
+            User user = userService.saveUser(EntityConverter.convertFromUserDTO(userDTO));
+            return EntityConverter.convertFromUserEntity(user);
     }
 
     @Operation(
@@ -163,7 +164,7 @@ public class UserController {
     }
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    @ExceptionHandler(MethodArgumentNotValidException.class)
+    @ExceptionHandler({MethodArgumentNotValidException.class, EntityExistsException.class})
     public Map<String, String> handleValidationExceptions(
             MethodArgumentNotValidException ex) {
         Map<String, String> errors = new HashMap<>();
