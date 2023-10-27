@@ -21,12 +21,12 @@ public class DataInitializer implements ApplicationRunner {
     public void run(ApplicationArguments args) throws Exception {
             var user1 = new User();
             user1.setName("Doe");
-            user1.setName("John");
+            user1.setVorname("John");
             user1.setEMail("john@doe.de");
 
             var user2 = new User();
             user2.setName("Keßel");
-            user2.setName("Martin");
+            user2.setVorname("Martin");
             user2.setEMail("martin@kessel.de");
 
             var user3 = new User();

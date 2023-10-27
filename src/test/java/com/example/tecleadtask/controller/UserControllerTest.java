@@ -2,14 +2,17 @@ package com.example.tecleadtask.controller;
 
 import com.example.tecleadtask.controllers.UserController;
 import com.example.tecleadtask.dto.UserDTO;
+import com.example.tecleadtask.exception.UserAppException;
 import com.example.tecleadtask.services.UserService;
 import com.example.tecleadtask.util.ApiConstants;
 import com.example.tecleadtask.util.DummyUserEntity;
 import com.example.tecleadtask.util.EntityConverter;
 import com.example.tecleadtask.util.TestUtil;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import jakarta.persistence.EntityExistsException;
 import org.json.JSONObject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -28,8 +31,7 @@ import java.util.Optional;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -58,7 +60,7 @@ class UserControllerTest {
 
     @Test
     @DisplayName("A user entity is persisted and response should be 'ok'.")
-    void saveBankTest() throws Exception {
+    void saveUserTest() throws Exception {
 
         when(userServiceMock.saveUser(any())).thenReturn(DummyUserEntity.createUserEntity());
         UserDTO userDTO = EntityConverter.convertFromUserEntity(DummyUserEntity.createUserEntity());
@@ -79,8 +81,8 @@ class UserControllerTest {
     void saveUserValidationNoVorNameAttribute() throws Exception {
 
         var userDAO = new JSONObject();
-        userDAO.put("name","Keßel");
-        userDAO.put("email","info@example.de");
+        userDAO.put("name", "Keßel");
+        userDAO.put("email", "info@example.de");
 
         mockMvc.perform(post(ApiConstants.SAVE_USER)
                         .content(userDAO.toString())
@@ -128,8 +130,8 @@ class UserControllerTest {
     void saveUserValidationNoEmailAttribute() throws Exception {
 
         var userDAO = new JSONObject();
-        userDAO.put("name","Keßel");
-        userDAO.put("vorname","Martin");
+        userDAO.put("name", "Keßel");
+        userDAO.put("vorname", "Martin");
 
         when(userServiceMock.saveUser(any())).thenReturn(DummyUserEntity.createUserEntity());
 
@@ -137,6 +139,23 @@ class UserControllerTest {
                         .content(userDAO.toString())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isCreated());
+    }
+
+    @Test
+    @DisplayName("User entity with the same id is known, response should be 'server error'.")
+    void saveUserWithKnownId() throws Exception {
+
+        var userDAO = new JSONObject();
+        userDAO.put("id", "1");
+        userDAO.put("name", "Doe");
+        userDAO.put("vorname", "Jane");
+
+        when(userServiceMock.saveUser(any())).thenThrow(new EntityExistsException(""));
+
+        mockMvc.perform(post(ApiConstants.SAVE_USER)
+                        .content(userDAO.toString())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().is5xxServerError());
     }
 
     @Test
@@ -164,10 +183,10 @@ class UserControllerTest {
 
     @Test
     @DisplayName("Response should return an user entity for a given id.")
-    void findUserById() throws Exception{
+    void findUserById() throws Exception {
         when(userServiceMock.findUserById(any())).thenReturn(Optional.of(DummyUserEntity.createUserEntity()));
 
-        mockMvc.perform(get(ApiConstants.FIND_USER_BY_ID,1))
+        mockMvc.perform(get(ApiConstants.FIND_USER_BY_ID, 1))
                 .andExpect(status().isOk())
                 .andExpectAll(
                         content().json("{'name':'Keßel'}")
@@ -176,16 +195,27 @@ class UserControllerTest {
 
     @Test
     @DisplayName("Response should return 'no content'.")
-    void findUserByIdEmptyResultTest() throws Exception{
+    void findUserByIdEmptyResult() throws Exception {
         when(userServiceMock.findUserById(any())).thenReturn(Optional.empty());
 
-        mockMvc.perform(get(ApiConstants.FIND_USER_BY_ID,1))
+        mockMvc.perform(get(ApiConstants.FIND_USER_BY_ID, 1))
                 .andExpect(status().isNoContent());
     }
 
     @Test
-    @DisplayName("SuResponse should be 'no content'.")
-    void deleteUserTest() throws Exception{
+    @DisplayName("Response should return 'Server Error.")
+    void findUserByIdThrowException() throws Exception {
+        doThrow(new UserAppException("Id for user object is missing."))
+                .when(userServiceMock)
+                .findUserById(any());
+
+        mockMvc.perform(get(ApiConstants.FIND_USER_BY_ID,1))
+                .andExpect(status().is5xxServerError());
+    }
+
+    @Test
+    @DisplayName("Response should be 'ok'.")
+    void deleteUserSuccessful() throws Exception {
         UserDTO userDTO = EntityConverter.convertFromUserEntity(DummyUserEntity.createUserEntity());
 
         doNothing().when(userServiceMock).deleteUser(any());
@@ -197,16 +227,46 @@ class UserControllerTest {
     }
 
     @Test
-    @DisplayName("Response should be 'no content'.")
-    void deleteUserByIdTest() throws Exception{
+    @DisplayName("No user to delete, response should be 'no content'.")
+    void deleteUserWithUnknownUser() throws Exception {
+
+        var userDTO = new JSONObject();
+        userDTO.put("name", "bang");
+        userDTO.put("vorname", "Farid");
+        userDTO.put("email", "Farid");
+
+        doThrow(new UserAppException("No object to delete.")).when(userServiceMock).deleteUser(any());
+
+        mockMvc.perform(delete(ApiConstants.DELETE_USER)
+                        .content(userDTO.toString())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().is5xxServerError());
+    }
+
+    @Test
+    @DisplayName("Response should be 'is ok'.")
+    void deleteUserById() throws Exception {
         UserDTO userDTO = EntityConverter.convertFromUserEntity(DummyUserEntity.createUserEntity());
 
         doNothing().when(userServiceMock).deleteUser(any());
 
-        mockMvc.perform(delete(ApiConstants.DELETE_USER_BY_ID,1)
+        mockMvc.perform(delete(ApiConstants.DELETE_USER_BY_ID, 1)
                         .content(mapper.writeValueAsString(userDTO))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void deleteUserByIdUnknownUser() throws Exception {
+        UserDTO userDTO = EntityConverter.convertFromUserEntity(DummyUserEntity.createUserEntity());
+
+        doThrow(new UserAppException("")).when(userServiceMock).deleteUserById(any());
+
+        mockMvc.perform(delete(ApiConstants.DELETE_USER_BY_ID, 1)
+                        .content(mapper.writeValueAsString(userDTO))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().is5xxServerError());
+
     }
 
     @Test
@@ -214,8 +274,7 @@ class UserControllerTest {
     void updateUserTest() throws Exception {
         UserDTO userDTO = EntityConverter.convertFromUserEntity(DummyUserEntity.createUserEntity());
 
-        when(userServiceMock.findUserById(any())).thenReturn(Optional.of(DummyUserEntity.createUserEntity()));
-        when(userServiceMock.saveUser(any())).thenReturn(DummyUserEntity.createUserEntity());
+        when(userServiceMock.updateUser(any())).thenReturn(DummyUserEntity.createUserEntity());
 
         mockMvc.perform(put(ApiConstants.UPDATE_USER)
                         .content(mapper.writeValueAsString(userDTO))
@@ -228,13 +287,12 @@ class UserControllerTest {
     void updateUserWithEmptyObject() throws Exception {
         UserDTO userDTO = EntityConverter.convertFromUserEntity(DummyUserEntity.createUserEntity());
 
-        when(userServiceMock.findUserById(any())).thenReturn(Optional.empty());
-        when(userServiceMock.saveUser(any())).thenReturn(DummyUserEntity.createUserEntity());
+        doThrow(new UserAppException("")).when(userServiceMock).updateUser(any());
 
         mockMvc.perform(put(ApiConstants.UPDATE_USER)
                         .content(mapper.writeValueAsString(userDTO))
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isNoContent());
+                .andExpect(status().is5xxServerError());
     }
 
     @Test
@@ -244,11 +302,23 @@ class UserControllerTest {
         when(userServiceMock.findByVorname("Martin"))
                 .thenReturn(List.of(DummyUserEntity.createUserEntity()));
 
-        mockMvc.perform(get(ApiConstants.FIND_USER_BY_VORNAME).param("vorname","Martin")
-                .contentType(MediaType.APPLICATION_JSON))
+        mockMvc.perform(get(ApiConstants.FIND_USER_BY_VORNAME).param("vorname", "Martin")
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpectAll(
                         content().json("[{'name':'Keßel'}]")
                 );
+    }
+
+    @Test
+    @DisplayName("User could not be found by vorname and the response should be 'no content'.")
+    void couldNotFindUserByNameTest() throws Exception {
+
+        when(userServiceMock.findByVorname("Martin"))
+                .thenReturn(List.of());
+
+        mockMvc.perform(get(ApiConstants.FIND_USER_BY_VORNAME).param("vorname", "Martin")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound());
     }
 }

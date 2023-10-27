@@ -1,6 +1,7 @@
 package com.example.tecleadtask.service;
 
 import com.example.tecleadtask.entities.User;
+import com.example.tecleadtask.exception.UserAppException;
 import com.example.tecleadtask.repositories.UserRepository;
 import com.example.tecleadtask.services.UserService;
 import com.example.tecleadtask.services.UserServiceImpl;
@@ -18,6 +19,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -66,20 +68,77 @@ class UserServiceImplTest {
     @Test
     void getUserByIdTest() {
         when(userRepositoryMock.findById(any())).thenReturn(Optional.ofNullable(DummyUserEntity.createUserEntity()));
+
         assertThat(sut.findUserById(1L).get().getName()).isEqualTo("Keßel");
     }
 
     @Test
     void deleteUserTest(CapturedOutput output) {
+        when(userRepositoryMock.existsById(any())).thenReturn(true);
         sut.deleteUser(DummyUserEntity.createUserEntity());
+
         assertThat(output.getOut()).contains("User with id:");
         verify(userRepositoryMock).delete(any());
     }
 
     @Test
+    void deleteUserUnknownUserTest(CapturedOutput output) {
+        when(userRepositoryMock.existsById(any())).thenReturn(false);
+
+        assertThatThrownBy(() -> {
+            sut.deleteUser(DummyUserEntity.createUserEntity());
+        }).isInstanceOf(UserAppException.class)
+                .hasMessage("No object to delete.");
+        assertThat(output.getOut()).contains("could not be deleted.");
+    }
+
+    @Test
     void deleteUserByIdTest() {
+        when(userRepositoryMock.existsById(any())).thenReturn(true);
         sut.deleteUserById(1L);
         verify(userRepositoryMock).deleteById(any());
+    }
+
+    @Test
+    void deleteUserByIdUnknownObjectTest() {
+        when(userRepositoryMock.existsById(any())).thenReturn(false);
+
+        assertThatThrownBy(() -> {
+            sut.deleteUserById(1L);
+        }).isInstanceOf(UserAppException.class)
+                .hasMessage("No object to delete.");
+    }
+
+    @Test
+    void updateUserTest() {
+        when(userRepositoryMock.existsById(any())).thenReturn(true);
+        when(userRepositoryMock.findById(any())).thenReturn(Optional.of(DummyUserEntity.createUserEntity()));
+        when(userRepositoryMock.save(any())).thenReturn(DummyUserEntity.createUserEntity());
+
+        User result = sut.updateUser(DummyUserEntity.createUserEntity());
+        verify(userRepositoryMock).save(any());
+        assertThat(result.getName()).isEqualTo(DummyUserEntity.createUserEntity().getName());
+    }
+
+    @Test
+    void updateUserLoggingMessageTest(CapturedOutput output) {
+        when(userRepositoryMock.existsById(any())).thenReturn(true);
+        when(userRepositoryMock.findById(any())).thenReturn(Optional.of(DummyUserEntity.createUserEntity()));
+        when(userRepositoryMock.save(any())).thenReturn(DummyUserEntity.createUserEntity());
+
+        sut.updateUser(DummyUserEntity.createUserEntity());
+        assertThat(output.getOut()).contains("User with id:");
+    }
+
+    @Test
+    void updateUserUnknownObjectTest(CapturedOutput output) {
+        when(userRepositoryMock.existsById(any())).thenReturn(false);
+
+        assertThatThrownBy(() -> {
+            sut.updateUser(DummyUserEntity.createUserEntity());
+        }).isInstanceOf(UserAppException.class)
+                .hasMessage("No object to update.");
+        assertThat(output.getOut()).contains("could not be updated");
     }
 
     @Test

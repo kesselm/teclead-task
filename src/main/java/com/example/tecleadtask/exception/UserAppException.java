@@ -5,7 +5,7 @@ import lombok.Getter;
 public class UserAppException extends RuntimeException {
 
     @Getter
-    private String message;
+    private final String message;
 
     public UserAppException(String message){
         super(message);
