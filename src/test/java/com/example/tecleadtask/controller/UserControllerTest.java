@@ -8,7 +8,6 @@ import com.example.tecleadtask.util.ApiConstants;
 import com.example.tecleadtask.util.DummyUserEntity;
 import com.example.tecleadtask.util.EntityConverter;
 import com.example.tecleadtask.util.TestUtil;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -43,7 +42,7 @@ class UserControllerTest {
     @MockBean
     private UserService userServiceMock;
 
-    private WebApplicationContext context;
+    private final WebApplicationContext context;
     private MockMvc mockMvc;
     private final ObjectMapper mapper = new ObjectMapper();
 
@@ -161,7 +160,7 @@ class UserControllerTest {
     @Test
     @DisplayName("Response should be a List of users.")
     void findAllUsersTest() throws Exception {
-        when(userServiceMock.findAllUsers()).thenReturn(Arrays.asList(DummyUserEntity.createUserEntity()));
+        when(userServiceMock.findAllUsers()).thenReturn(List.of(DummyUserEntity.createUserEntity()));
 
         mockMvc.perform(get(ApiConstants.GET_USERS))
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
@@ -174,7 +173,7 @@ class UserControllerTest {
     @Test
     @DisplayName("Empty list should return response status 'no content'.")
     void findAllUsersFromEmptyList() throws Exception {
-        when(userServiceMock.findAllUsers()).thenReturn(Arrays.asList());
+        when(userServiceMock.findAllUsers()).thenReturn(List.of());
 
         mockMvc.perform(get(ApiConstants.GET_USERS))
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))

@@ -11,14 +11,14 @@ import java.util.List;
 @Component
 public class DataInitializer implements ApplicationRunner {
 
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
 
     public DataInitializer(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
 
     @Override
-    public void run(ApplicationArguments args) throws Exception {
+    public void run(ApplicationArguments args) {
             var user1 = new User();
             user1.setName("Doe");
             user1.setVorname("John");

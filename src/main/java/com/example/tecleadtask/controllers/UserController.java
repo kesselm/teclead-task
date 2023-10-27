@@ -11,7 +11,6 @@ import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -25,7 +24,7 @@ import java.util.Optional;
 @RestController
 public class UserController {
 
-    private UserService userService;
+    private final UserService userService;
 
     public UserController(UserService userService) {
         this.userService = userService;
@@ -51,13 +50,12 @@ public class UserController {
 
     @Operation(
             summary = "Get all users.",
-            description = "Get all users."
-    )
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", content = {@Content(array = @ArraySchema(
-                    schema = @Schema(implementation = UserDTO.class)), mediaType = "application/json")}),
-            @ApiResponse(responseCode = "204", description = "No Content", content = @Content)
-    })
+            description = "Get all users.",
+            responses = {
+                    @ApiResponse(responseCode = "200", content = {@Content(array = @ArraySchema(
+                            schema = @Schema(implementation = UserDTO.class)), mediaType = "application/json")}),
+                    @ApiResponse(responseCode = "204", description = "No Content", content = @Content)
+            })
     @GetMapping(ApiConstants.GET_USERS)
     public ResponseEntity<List<UserDTO>> findAllUsers() {
         List<UserDTO> userDTOS = userService.findAllUsers()
@@ -72,32 +70,26 @@ public class UserController {
 
     @Operation(
             summary = "Get a user account by identifier.",
-            description = "Get a user account by identifier."
-    )
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", content = {@Content(schema = @Schema(implementation = UserDTO.class), mediaType = "application/json")}),
-            @ApiResponse(responseCode = "204", description = "No Content", content = @Content),
-            @ApiResponse(responseCode = "500", description = "Server Error", content = @Content),
-    })
+            description = "Get a user account by identifier.",
+            responses = {
+                    @ApiResponse(responseCode = "200", content = {@Content(schema = @Schema(implementation = UserDTO.class), mediaType = "application/json")}),
+                    @ApiResponse(responseCode = "204", description = "No Content", content = @Content),
+                    @ApiResponse(responseCode = "500", description = "Server Error", content = @Content),
+            })
     @GetMapping(ApiConstants.FIND_USER_BY_ID)
     public ResponseEntity<UserDTO> findUserById(@Parameter(description = "Id of user to be searched.") @PathVariable Long id) {
         Optional<User> user = userService.findUserById(id);
 
-        if (user.isPresent()) {
-            return new ResponseEntity<>(EntityConverter.convertFromUserEntity(user.get()), HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        }
+        return user.map(value -> new ResponseEntity<>(EntityConverter.convertFromUserEntity(value), HttpStatus.OK)).orElseGet(() -> new ResponseEntity<>(HttpStatus.NO_CONTENT));
     }
 
     @Operation(
             summary = "Delete an user.",
-            description = "Delete a user."
-    )
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", content = {@Content(schema = @Schema(implementation = UserDTO.class), mediaType = "application/json")}),
-            @ApiResponse(responseCode = "500", description = "Server Error", content = @Content),
-    })
+            description = "Delete a user.",
+            responses = {
+                    @ApiResponse(responseCode = "200", content = {@Content(schema = @Schema(implementation = UserDTO.class), mediaType = "application/json")}),
+                    @ApiResponse(responseCode = "500", description = "Server Error", content = @Content)
+            })
     @DeleteMapping(ApiConstants.DELETE_USER)
     public void deleteUser(@RequestBody UserDTO userDTO) {
         userService.deleteUser(EntityConverter.convertFromUserDTO(userDTO));
@@ -105,12 +97,11 @@ public class UserController {
 
     @Operation(
             summary = "Delete a user by identifier.",
-            description = "Delete a user by identifier."
-    )
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", content = {@Content(schema = @Schema(implementation = UserDTO.class), mediaType = "application/json")}),
-            @ApiResponse(responseCode = "500", description = "Server Error", content = @Content),
-    })
+            description = "Delete a user by identifier.",
+            responses = {
+                    @ApiResponse(responseCode = "200", content = {@Content(schema = @Schema(implementation = UserDTO.class), mediaType = "application/json")}),
+                    @ApiResponse(responseCode = "500", description = "Server Error", content = @Content),
+            })
     @DeleteMapping(ApiConstants.DELETE_USER_BY_ID)
     public void deleteUserById(@Parameter(description = "Id of user to be searched.") @PathVariable Long id) {
         userService.deleteUserById(id);
@@ -118,30 +109,28 @@ public class UserController {
 
     @Operation(
             summary = "Update an user.",
-            description = "Update an user."
-    )
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", content = {@Content(schema =
-            @Schema(implementation = UserDTO.class), mediaType = "application/json")}),
-            @ApiResponse(responseCode = "500", description = "Server Error", content = @Content),
-    })
+            description = "Update an user.",
+            responses = {
+                    @ApiResponse(responseCode = "200", content = {@Content(schema =
+                    @Schema(implementation = UserDTO.class), mediaType = "application/json")}),
+                    @ApiResponse(responseCode = "500", description = "Server Error", content = @Content),
+            })
     @ResponseStatus(HttpStatus.OK)
     @PutMapping(ApiConstants.UPDATE_USER)
     public UserDTO updateUser(@RequestBody UserDTO userDTO) {
         User user = EntityConverter.convertFromUserDTO(userDTO);
         User updatedUser = userService.updateUser(user);
         return EntityConverter.convertFromUserEntity(updatedUser);
-}
+    }
 
     @Operation(
             summary = "Get user entities related to the vorName.",
-            description = "Get user entities related to the vorName."
-    )
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", content = {@Content(array = @ArraySchema(
-                    schema = @Schema(implementation = UserDTO.class)), mediaType = "application/json")}),
-            @ApiResponse(responseCode = "204", content = {@Content(schema = @Schema())})
-    })
+            description = "Get user entities related to the vorName.",
+            responses = {
+                    @ApiResponse(responseCode = "200", content = {@Content(array = @ArraySchema(
+                            schema = @Schema(implementation = UserDTO.class)), mediaType = "application/json")}),
+                    @ApiResponse(responseCode = "204", content = {@Content(schema = @Schema())})
+            })
     @GetMapping(ApiConstants.FIND_USER_BY_VORNAME)
     public ResponseEntity<List<UserDTO>> findByVornamen(@Parameter(description = "Id of user to be searched.") @RequestParam("vorname") String vorname) {
         List<User> users = userService.findByVorname(vorname);

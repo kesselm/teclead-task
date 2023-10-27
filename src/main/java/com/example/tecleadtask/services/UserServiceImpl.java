@@ -16,7 +16,7 @@ import static com.example.tecleadtask.util.ApiConstants.CUSTOM_MESSAGE;
 @Log4j2
 public class UserServiceImpl implements UserService {
 
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
 
 
     public UserServiceImpl(UserRepository userRepository) {

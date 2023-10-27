@@ -57,7 +57,7 @@ class UserServiceImplTest {
 
     @Test
     void findAllUsersTest() {
-        when(userRepositoryMock.findAll()).thenReturn(Arrays.asList(DummyUserEntity.createUserEntity()));
+        when(userRepositoryMock.findAll()).thenReturn(List.of(DummyUserEntity.createUserEntity()));
 
         List<User> result = sut.findAllUsers();
 
@@ -67,7 +67,7 @@ class UserServiceImplTest {
 
     @Test
     void getUserByIdTest() {
-        when(userRepositoryMock.findById(any())).thenReturn(Optional.ofNullable(DummyUserEntity.createUserEntity()));
+        when(userRepositoryMock.findById(any())).thenReturn(Optional.of(DummyUserEntity.createUserEntity()));
 
         assertThat(sut.findUserById(1L).get().getName()).isEqualTo("Keßel");
     }
@@ -85,9 +85,7 @@ class UserServiceImplTest {
     void deleteUserUnknownUserTest(CapturedOutput output) {
         when(userRepositoryMock.existsById(any())).thenReturn(false);
 
-        assertThatThrownBy(() -> {
-            sut.deleteUser(DummyUserEntity.createUserEntity());
-        }).isInstanceOf(UserAppException.class)
+        assertThatThrownBy(() -> sut.deleteUser(DummyUserEntity.createUserEntity())).isInstanceOf(UserAppException.class)
                 .hasMessage("No object to delete.");
         assertThat(output.getOut()).contains("could not be deleted.");
     }
@@ -134,9 +132,7 @@ class UserServiceImplTest {
     void updateUserUnknownObjectTest(CapturedOutput output) {
         when(userRepositoryMock.existsById(any())).thenReturn(false);
 
-        assertThatThrownBy(() -> {
-            sut.updateUser(DummyUserEntity.createUserEntity());
-        }).isInstanceOf(UserAppException.class)
+        assertThatThrownBy(() -> sut.updateUser(DummyUserEntity.createUserEntity())).isInstanceOf(UserAppException.class)
                 .hasMessage("No object to update.");
         assertThat(output.getOut()).contains("could not be updated");
     }

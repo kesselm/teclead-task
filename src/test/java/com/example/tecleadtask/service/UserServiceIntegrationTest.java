@@ -46,9 +46,7 @@ class UserServiceIntegrationTest {
                 .eMail("john@doe.com")
                 .build();
 
-        assertThatThrownBy(() -> {
-            userService.saveUser(user);
-        }).isInstanceOf(EntityExistsException.class)
+        assertThatThrownBy(() -> userService.saveUser(user)).isInstanceOf(EntityExistsException.class)
                 .hasMessage("There is already existing entity with this id.");
 
     }
@@ -107,9 +105,7 @@ class UserServiceIntegrationTest {
 
     @Test
     void findUserByIdThrowExceptionByNullId() {
-        assertThatThrownBy(() -> {
-            userService.findUserById(null);
-        }).isInstanceOf(UserAppException.class)
+        assertThatThrownBy(() -> userService.findUserById(null)).isInstanceOf(UserAppException.class)
                 .hasMessage("Id for user object is missing.");
     }
 
@@ -121,9 +117,7 @@ class UserServiceIntegrationTest {
                 .eMail("farid@bang.de")
                 .build();
 
-        assertThatThrownBy(() -> {
-            userService.deleteUser(user);
-        }).isInstanceOf(UserAppException.class)
+        assertThatThrownBy(() -> userService.deleteUser(user)).isInstanceOf(UserAppException.class)
                 .hasMessage("No object to delete.");
     }
 
