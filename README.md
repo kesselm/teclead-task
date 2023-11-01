@@ -34,7 +34,7 @@ In der `application.properties` findet sich folgende Property `spring.profiles.a
 Der Unterschied besteht in dem Port: _8080_ für _dev_ und _9090_ für _prod_.
 
 ## Start der Anwendung
-Die Anwendung lässt sich aus dem Repository einmal über das Kommaondo:
+Die Anwendung lässt sich aus dem Repository einmal über das Kommando:
 
 ```
 mvn spring-boot:run
