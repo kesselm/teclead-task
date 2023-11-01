@@ -1,17 +1,17 @@
 package com.example.tecleadtask.services;
 
-import com.example.tecleadtask.entities.User;
+import com.example.tecleadtask.entities.UserEntity;
 
 import java.util.List;
 import java.util.Optional;
 
 public interface UserService {
 
-    User saveUser(User user);
-    List<User> findAllUsers();
-    Optional<User> findUserById(Long id);
-    void deleteUser(User user);
+    UserEntity saveUser(UserEntity userEntity);
+    List<UserEntity> findAllUsers();
+    Optional<UserEntity> findUserById(Long id);
+    void deleteUser(UserEntity userEntity);
     void deleteUserById(Long id);
-    User updateUser(User user);
-    List<User> findByVorname(String vorname);
+    UserEntity updateUser(UserEntity userEntity);
+    List<UserEntity> findByVorname(String vorname);
 }

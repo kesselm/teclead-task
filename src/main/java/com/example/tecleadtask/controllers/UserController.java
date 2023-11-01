@@ -1,7 +1,7 @@
 package com.example.tecleadtask.controllers;
 
 import com.example.tecleadtask.dto.UserDTO;
-import com.example.tecleadtask.entities.User;
+import com.example.tecleadtask.entities.UserEntity;
 import com.example.tecleadtask.services.UserService;
 import com.example.tecleadtask.util.ApiConstants;
 import com.example.tecleadtask.util.EntityConverter;
@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,14 +23,10 @@ import java.util.Optional;
 
 @Tag(name = "Teclead Task Application", description = "An Application to find users.")
 @RestController
+@RequiredArgsConstructor
 public class UserController {
 
     private final UserService userService;
-
-    public UserController(UserService userService) {
-        this.userService = userService;
-    }
-
 
     @Operation(
             summary = "Create a new user entity.",
@@ -43,9 +40,10 @@ public class UserController {
             })
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping(ApiConstants.SAVE_USER)
+    @CrossOrigin(origins = "http://localhost:8080")
     public UserDTO saveUser(@Valid @RequestBody UserDTO userDTO) {
-        User user = userService.saveUser(EntityConverter.convertFromUserDTO(userDTO));
-        return EntityConverter.convertFromUserEntity(user);
+        UserEntity userEntity = userService.saveUser(EntityConverter.convertFromUserDTO(userDTO));
+        return EntityConverter.convertFromUserEntity(userEntity);
     }
 
     @Operation(
@@ -57,6 +55,7 @@ public class UserController {
                     @ApiResponse(responseCode = "204", description = "No Content", content = @Content)
             })
     @GetMapping(ApiConstants.GET_USERS)
+    @CrossOrigin(origins = "http://localhost:8080")
     public ResponseEntity<List<UserDTO>> findAllUsers() {
         List<UserDTO> userDTOS = userService.findAllUsers()
                 .stream().map(EntityConverter::convertFromUserEntity)
@@ -78,7 +77,7 @@ public class UserController {
             })
     @GetMapping(ApiConstants.FIND_USER_BY_ID)
     public ResponseEntity<UserDTO> findUserById(@Parameter(description = "Id of user to be searched.") @PathVariable Long id) {
-        Optional<User> user = userService.findUserById(id);
+        Optional<UserEntity> user = userService.findUserById(id);
 
         return user.map(value -> new ResponseEntity<>(EntityConverter.convertFromUserEntity(value), HttpStatus.OK)).orElseGet(() -> new ResponseEntity<>(HttpStatus.NO_CONTENT));
     }
@@ -118,9 +117,9 @@ public class UserController {
     @ResponseStatus(HttpStatus.OK)
     @PutMapping(ApiConstants.UPDATE_USER)
     public UserDTO updateUser(@RequestBody UserDTO userDTO) {
-        User user = EntityConverter.convertFromUserDTO(userDTO);
-        User updatedUser = userService.updateUser(user);
-        return EntityConverter.convertFromUserEntity(updatedUser);
+        UserEntity userEntity = EntityConverter.convertFromUserDTO(userDTO);
+        UserEntity updatedUserEntity = userService.updateUser(userEntity);
+        return EntityConverter.convertFromUserEntity(updatedUserEntity);
     }
 
     @Operation(
@@ -133,9 +132,9 @@ public class UserController {
             })
     @GetMapping(ApiConstants.FIND_USER_BY_VORNAME)
     public ResponseEntity<List<UserDTO>> findByVornamen(@Parameter(description = "Id of user to be searched.") @RequestParam("vorname") String vorname) {
-        List<User> users = userService.findByVorname(vorname);
-        if (!users.isEmpty()) {
-            List<UserDTO> kontenDAO = users.stream().map(EntityConverter::convertFromUserEntity)
+        List<UserEntity> userEntities = userService.findByVorname(vorname);
+        if (!userEntities.isEmpty()) {
+            List<UserDTO> kontenDAO = userEntities.stream().map(EntityConverter::convertFromUserEntity)
                     .toList();
             return new ResponseEntity<>(kontenDAO, HttpStatus.OK);
         } else {

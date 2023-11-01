@@ -1,6 +1,6 @@
 package com.example.tecleadtask.service;
 
-import com.example.tecleadtask.entities.User;
+import com.example.tecleadtask.entities.UserEntity;
 import com.example.tecleadtask.exception.UserAppException;
 import com.example.tecleadtask.repositories.UserRepository;
 import com.example.tecleadtask.services.UserService;
@@ -14,7 +14,6 @@ import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -25,7 +24,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith({SpringExtension.class, OutputCaptureExtension.class})
-class UserServiceImplTest {
+class UserEntityServiceImplTest {
 
     @MockBean
     private UserRepository userRepositoryMock;
@@ -41,7 +40,7 @@ class UserServiceImplTest {
     void saveUserTest() {
         when(userRepositoryMock.save(any())).thenReturn(DummyUserEntity.createUserEntity());
 
-        User result = sut.saveUser(DummyUserEntity.createUserEntity());
+        UserEntity result = sut.saveUser(DummyUserEntity.createUserEntity());
 
         assertThat(result.getName()).isEqualTo("Keßel");
     }
@@ -59,7 +58,7 @@ class UserServiceImplTest {
     void findAllUsersTest() {
         when(userRepositoryMock.findAll()).thenReturn(List.of(DummyUserEntity.createUserEntity()));
 
-        List<User> result = sut.findAllUsers();
+        List<UserEntity> result = sut.findAllUsers();
 
         assertThat(result).hasSize(1);
         assertThat(result.get(0).getName()).isEqualTo("Keßel");
@@ -113,7 +112,7 @@ class UserServiceImplTest {
         when(userRepositoryMock.findById(any())).thenReturn(Optional.of(DummyUserEntity.createUserEntity()));
         when(userRepositoryMock.save(any())).thenReturn(DummyUserEntity.createUserEntity());
 
-        User result = sut.updateUser(DummyUserEntity.createUserEntity());
+        UserEntity result = sut.updateUser(DummyUserEntity.createUserEntity());
         verify(userRepositoryMock).save(any());
         assertThat(result.getName()).isEqualTo(DummyUserEntity.createUserEntity().getName());
     }
@@ -144,4 +143,6 @@ class UserServiceImplTest {
         String result = sut.findByVorname("Martin").get(0).getName();
         assertThat(result).isEqualTo("Keßel");
     }
+
+
 }

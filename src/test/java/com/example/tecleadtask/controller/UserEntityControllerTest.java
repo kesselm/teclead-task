@@ -37,7 +37,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @ExtendWith(SpringExtension.class)
 @WebMvcTest(UserController.class)
-class UserControllerTest {
+class UserEntityControllerTest {
 
     @MockBean
     private UserService userServiceMock;
@@ -46,7 +46,7 @@ class UserControllerTest {
     private MockMvc mockMvc;
     private final ObjectMapper mapper = new ObjectMapper();
 
-    public UserControllerTest(WebApplicationContext context) {
+    public UserEntityControllerTest(WebApplicationContext context) {
         this.context = context;
     }
 
@@ -92,7 +92,11 @@ class UserControllerTest {
     @Test
     @DisplayName("The attribute name is empty and the response should be 'bad request'.")
     void saveUserValidationEmptyVornameField() throws Exception {
-        var userDAO = new UserDTO(1L, "Keßel", "", "info@example.com");
+        var userDAO = new UserDTO();
+        userDAO.setId(1L);
+        userDAO.setName("Keßel");
+        userDAO.setVorname("");
+        userDAO.setEMail("info@example.com");
 
         mockMvc.perform(post(ApiConstants.SAVE_USER)
                         .content(TestUtil.asJsonString(userDAO))
@@ -103,7 +107,11 @@ class UserControllerTest {
     @Test
     @DisplayName("The attribute email is empty and the response should be 'created'.")
     void saveUserValidationEmptyEmailField() throws Exception {
-        var userDAO = new UserDTO(1L, "Keßel", "Keßel", "");
+        var userDAO = new UserDTO();
+        userDAO.setId(1L);
+        userDAO.setName("Keßel");
+        userDAO.setVorname("Martin");
+        userDAO.setEMail("");
 
         when(userServiceMock.saveUser(any())).thenReturn(DummyUserEntity.createUserEntity());
 
@@ -116,7 +124,11 @@ class UserControllerTest {
     @Test
     @DisplayName("The email address is wrong written and the response should be 'bad request'.")
     void saveUserValidationWrongEmailField() throws Exception {
-        var userDAO = new UserDTO(1L, "Keßel", "Keßel", "example.com");
+        var userDAO = new UserDTO();
+        userDAO.setId(1L);
+        userDAO.setName("Keßel");
+        userDAO.setVorname("Martin");
+        userDAO.setEMail("example.com");
 
         mockMvc.perform(post(ApiConstants.SAVE_USER)
                         .content(TestUtil.asJsonString(userDAO))

@@ -1,9 +1,10 @@
 package com.example.tecleadtask.services;
 
-import com.example.tecleadtask.entities.User;
+import com.example.tecleadtask.entities.UserEntity;
 import com.example.tecleadtask.exception.UserAppException;
 import com.example.tecleadtask.repositories.UserRepository;
 import jakarta.persistence.EntityExistsException;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
 
@@ -14,32 +15,28 @@ import static com.example.tecleadtask.util.ApiConstants.CUSTOM_MESSAGE;
 
 @Service
 @Log4j2
+@RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
 
-
-    public UserServiceImpl(UserRepository userRepository) {
-        this.userRepository = userRepository;
-    }
-
     @Override
-    public User saveUser(User user) {
-        if (user.getId() != null && userRepository.existsById(user.getId())) {
+    public UserEntity saveUser(UserEntity userEntity) {
+        if (userEntity.getId() != null && userRepository.existsById(userEntity.getId())) {
             throw new EntityExistsException("There is already existing entity with this id.");
         }
-        User newUser = userRepository.save(user);
-        log.info("{} New user with id: {} is persisted.", CUSTOM_MESSAGE, newUser.getId());
-        return newUser;
+        UserEntity newUserEntity = userRepository.save(userEntity);
+        log.info("{} New user with id: {} is persisted.", CUSTOM_MESSAGE, newUserEntity.getId());
+        return newUserEntity;
     }
 
     @Override
-    public List<User> findAllUsers() {
+    public List<UserEntity> findAllUsers() {
         return userRepository.findAll();
     }
 
     @Override
-    public Optional<User> findUserById(Long id) {
+    public Optional<UserEntity> findUserById(Long id) {
         if (id == null) {
             throw new UserAppException("Id for user object is missing.");
         } else {
@@ -48,12 +45,12 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void deleteUser(User user) {
-        if (user.getId() != null && userRepository.existsById(user.getId())) {
-            userRepository.delete(user);
-            log.info("{} User with id: {} was deleted.", CUSTOM_MESSAGE, user.getId());
+    public void deleteUser(UserEntity userEntity) {
+        if (userEntity.getId() != null && userRepository.existsById(userEntity.getId())) {
+            userRepository.delete(userEntity);
+            log.info("{} User with id: {} was deleted.", CUSTOM_MESSAGE, userEntity.getId());
         } else {
-            log.info("{} User {} could not be deleted.", CUSTOM_MESSAGE, user);
+            log.info("{} User {} could not be deleted.", CUSTOM_MESSAGE, userEntity);
             throw new UserAppException("No object to delete.");
         }
     }
@@ -69,28 +66,28 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public User updateUser(User user) {
-        User newUser = new User();
-        if (user.getId() != null && userRepository.existsById(user.getId())) {
-            Optional<User> userOptional = userRepository.findById(user.getId());
+    public UserEntity updateUser(UserEntity userEntity) {
+        UserEntity newUserEntity = new UserEntity();
+        if (userEntity.getId() != null && userRepository.existsById(userEntity.getId())) {
+            Optional<UserEntity> userOptional = userRepository.findById(userEntity.getId());
             if (userOptional.isPresent()) {
-                User oldUser = userOptional.get();
-                oldUser.setId(user.getId());
-                oldUser.setName(user.getName() != null ? user.getName() : oldUser.getName());
-                oldUser.setVorname(user.getVorname() != null ? user.getVorname() : oldUser.getVorname());
-                oldUser.setEMail(user.getEMail() != null ? user.getEMail() : oldUser.getEMail());
-                newUser = userRepository.save(oldUser);
-                log.info("{} User with id: {} is updated.", CUSTOM_MESSAGE, user.getId());
+                UserEntity oldUserEntity = userOptional.get();
+                oldUserEntity.setId(userEntity.getId());
+                oldUserEntity.setName(userEntity.getName() != null ? userEntity.getName() : oldUserEntity.getName());
+                oldUserEntity.setVorname(userEntity.getVorname() != null ? userEntity.getVorname() : oldUserEntity.getVorname());
+                oldUserEntity.setEMail(userEntity.getEMail() != null ? userEntity.getEMail() : oldUserEntity.getEMail());
+                newUserEntity = userRepository.save(oldUserEntity);
+                log.info("{} User with id: {} is updated.", CUSTOM_MESSAGE, userEntity.getId());
             }
         } else {
-            log.info("{} User {} could not be updated.", CUSTOM_MESSAGE, user);
+            log.info("{} User {} could not be updated.", CUSTOM_MESSAGE, userEntity);
             throw new UserAppException("No object to update.");
         }
-        return newUser;
+        return newUserEntity;
     }
 
     @Override
-    public List<User> findByVorname(String vorname) {
+    public List<UserEntity> findByVorname(String vorname) {
         return userRepository.findByVorname(vorname);
     }
 }
