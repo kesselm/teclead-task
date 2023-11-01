@@ -40,7 +40,6 @@ public class UserController {
             })
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping(ApiConstants.SAVE_USER)
-    @CrossOrigin(origins = "http://localhost:8080")
     public UserDTO saveUser(@Valid @RequestBody UserDTO userDTO) {
         UserEntity userEntity = userService.saveUser(EntityConverter.convertFromUserDTO(userDTO));
         return EntityConverter.convertFromUserEntity(userEntity);
@@ -55,7 +54,6 @@ public class UserController {
                     @ApiResponse(responseCode = "204", description = "No Content", content = @Content)
             })
     @GetMapping(ApiConstants.GET_USERS)
-    @CrossOrigin(origins = "http://localhost:8080")
     public ResponseEntity<List<UserDTO>> findAllUsers() {
         List<UserDTO> userDTOS = userService.findAllUsers()
                 .stream().map(EntityConverter::convertFromUserEntity)
