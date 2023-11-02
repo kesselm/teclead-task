@@ -14,12 +14,20 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.Link;
+import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
+
+import static java.util.stream.Collectors.toList;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 @Tag(name = "Teclead Task Application", description = "An Application to find users.")
 @RestController
@@ -38,11 +46,12 @@ public class UserController {
                     @ApiResponse(responseCode = "400", description = "Bad Request", content = @Content),
                     @ApiResponse(responseCode = "500", description = "Server Error", content = @Content),
             })
-    @ResponseStatus(HttpStatus.CREATED)
     @PostMapping(ApiConstants.SAVE_USER)
-    public UserDTO saveUser(@Valid @RequestBody UserDTO userDTO) {
+    public HttpEntity<UserDTO> saveUser(@Valid @RequestBody UserDTO userDTO) {
         UserEntity userEntity = userService.saveUser(EntityConverter.convertFromUserDTO(userDTO));
-        return EntityConverter.convertFromUserEntity(userEntity);
+        UserDTO userDto = EntityConverter.convertFromUserEntity(userEntity);
+        userDto.add(linkTo(methodOn(UserController.class).saveUser(userDTO)).withSelfRel());
+        return new ResponseEntity<>(userDto, HttpStatus.CREATED);
     }
 
     @Operation(
@@ -54,14 +63,23 @@ public class UserController {
                     @ApiResponse(responseCode = "204", description = "No Content", content = @Content)
             })
     @GetMapping(ApiConstants.GET_USERS)
-    public ResponseEntity<List<UserDTO>> findAllUsers() {
-        List<UserDTO> userDTOS = userService.findAllUsers()
-                .stream().map(EntityConverter::convertFromUserEntity)
-                .toList();
+    public ResponseEntity<CollectionModel<EntityModel<UserDTO>>> findAllUsers() {
+
+        List<EntityModel<UserDTO>> userDTOS = userService.findAllUsers()
+                .stream()
+                .map(EntityConverter::convertFromUserEntity)
+                .toList()
+                .stream()
+                .map(userDto -> EntityModel.of(userDto,
+                        linkTo(methodOn(UserController.class).findUserById(userDto.getId())).withSelfRel()
+                        )).toList();
+
+        var result = CollectionModel.of(userDTOS);
+        result.add(linkTo(methodOn(UserController.class).findAllUsers()).withSelfRel());
         if (!userDTOS.isEmpty()) {
-            return new ResponseEntity<>(userDTOS, HttpStatus.OK);
+            return ResponseEntity.ok(CollectionModel.of(userDTOS, linkTo(methodOn(UserController.class).findAllUsers()).withSelfRel()));
         } else {
-            return new ResponseEntity<>(userDTOS, HttpStatus.NO_CONTENT);
+            return new ResponseEntity<>(result, HttpStatus.NO_CONTENT);
         }
     }
 
