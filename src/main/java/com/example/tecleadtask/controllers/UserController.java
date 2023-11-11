@@ -5,6 +5,7 @@ import com.example.tecleadtask.entities.UserEntity;
 import com.example.tecleadtask.services.UserService;
 import com.example.tecleadtask.util.ApiConstants;
 import com.example.tecleadtask.util.EntityConverter;
+import com.example.tecleadtask.util.SortAlgorithm;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -14,27 +15,31 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Sort;
 import org.springframework.hateoas.CollectionModel;
-import org.springframework.hateoas.EntityModel;
-import org.springframework.hateoas.Link;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
 
-import static java.util.stream.Collectors.toList;
+import static com.example.tecleadtask.util.ApiConstants.BASE_URL;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 @Tag(name = "Teclead Task Application", description = "An Application to find users.")
 @RestController
 @RequiredArgsConstructor
+@RequestMapping(BASE_URL)
 public class UserController {
 
     private final UserService userService;
+
+    private final String host = "http://localhost:8080/api/v1/";
 
     @Operation(
             summary = "Create a new user entity.",
@@ -58,28 +63,47 @@ public class UserController {
             summary = "Get all users.",
             description = "Get all users.",
             responses = {
-                    @ApiResponse(responseCode = "200", content = {@Content(array = @ArraySchema(
-                            schema = @Schema(implementation = UserDTO.class)), mediaType = "application/json")}),
+                    @ApiResponse(responseCode = "200", content = {
+                            @Content(
+                                    mediaType = MediaType.APPLICATION_JSON_VALUE,
+                                    schema = @Schema(ref = "#/components/schemas/Collection")
+                            )
+                    }),
                     @ApiResponse(responseCode = "204", description = "No Content", content = @Content)
             })
     @GetMapping(ApiConstants.GET_USERS)
-    public ResponseEntity<CollectionModel<EntityModel<UserDTO>>> findAllUsers() {
+    public ResponseEntity<CollectionModel<UserDTO>> findPaginatedUsers(@Parameter(description = "Number of the result set page.") @RequestParam(value = "page", defaultValue = "0") int page,
+                                                                       @Parameter(description = "Number of results on the page.") @RequestParam(value = "size", defaultValue = "10") int size,
+                                                                       @Parameter(description = "Field sort criteria.") @RequestParam(value = "field", defaultValue = "vorname") String field,
+                                                                       @Parameter(description = "Sort algorithm.") @RequestParam(value = "sortAlg", defaultValue = "ASC") SortAlgorithm sortAlg) {
 
-        List<EntityModel<UserDTO>> userDTOS = userService.findAllUsers()
+        Sort sort = Sort.by(field);
+        if (sortAlg.equals(SortAlgorithm.ASC)) {
+            sort.ascending();
+        } else {
+            sort.descending();
+        }
+
+        Page<UserEntity> site = userService.findAllUsersWithPagination(page, size, sort);
+        int pageSizes = site.getTotalPages();
+        int preSite = page > 0 && page <= pageSizes ? page - 1 : page;
+        int nextSite = page < pageSizes - 1 ? page + 1 : page;
+
+        List<UserDTO> users = site
                 .stream()
                 .map(EntityConverter::convertFromUserEntity)
                 .toList()
                 .stream()
-                .map(userDto -> EntityModel.of(userDto,
-                        linkTo(methodOn(UserController.class).findUserById(userDto.getId())).withSelfRel()
-                        )).toList();
+                .map(userDto -> (UserDTO) userDto.add(linkTo(methodOn(UserController.class).findUserById(userDto.getId())).withRel("findUser"))).toList();
 
-        var result = CollectionModel.of(userDTOS);
-        result.add(linkTo(methodOn(UserController.class).findAllUsers()).withSelfRel());
-        if (!userDTOS.isEmpty()) {
-            return ResponseEntity.ok(CollectionModel.of(userDTOS, linkTo(methodOn(UserController.class).findAllUsers()).withSelfRel()));
+        var collectionModel = CollectionModel.of(users);
+        collectionModel.add(linkTo(methodOn(UserController.class).findPaginatedUsers(preSite, size, field, sortAlg)).withRel("before"));
+        collectionModel.add(linkTo(methodOn(UserController.class).findPaginatedUsers(nextSite, size, field, sortAlg)).withRel("next"));
+
+        if (!users.isEmpty()) {
+            return ResponseEntity.ok(collectionModel);
         } else {
-            return new ResponseEntity<>(result, HttpStatus.NO_CONTENT);
+            return new ResponseEntity<>(collectionModel, HttpStatus.NO_CONTENT);
         }
     }
 

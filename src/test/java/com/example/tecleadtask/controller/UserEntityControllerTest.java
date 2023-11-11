@@ -2,24 +2,23 @@ package com.example.tecleadtask.controller;
 
 import com.example.tecleadtask.controllers.UserController;
 import com.example.tecleadtask.dto.UserDTO;
+import com.example.tecleadtask.entities.UserEntity;
 import com.example.tecleadtask.exception.UserAppException;
 import com.example.tecleadtask.services.UserService;
-import com.example.tecleadtask.util.ApiConstants;
-import com.example.tecleadtask.util.DummyUserEntity;
-import com.example.tecleadtask.util.EntityConverter;
-import com.example.tecleadtask.util.TestUtil;
+import com.example.tecleadtask.util.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import jakarta.persistence.EntityExistsException;
 import org.json.JSONObject;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.hateoas.MediaTypes;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -30,7 +29,7 @@ import org.springframework.web.context.WebApplicationContext;
 import java.util.Optional;
 import java.util.List;
 
-import static org.hamcrest.Matchers.containsString;
+import static com.example.tecleadtask.util.ApiConstants.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.hamcrest.core.Is.is;
@@ -68,7 +67,7 @@ class UserEntityControllerTest {
         mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         mapper.registerModule(new JavaTimeModule());
 
-        mockMvc.perform(post(ApiConstants.SAVE_USER)
+        mockMvc.perform(post(BASE_URL+SAVE_USER)
                         .content(mapper.writeValueAsString(userDTO))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isCreated())
@@ -85,7 +84,7 @@ class UserEntityControllerTest {
         userDAO.put("name", "Keßel");
         userDAO.put("email", "info@example.de");
 
-        mockMvc.perform(post(ApiConstants.SAVE_USER)
+        mockMvc.perform(post(BASE_URL+SAVE_USER)
                         .content(userDAO.toString())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest());
@@ -100,7 +99,7 @@ class UserEntityControllerTest {
         userDAO.setVorname("");
         userDAO.setEMail("info@example.com");
 
-        mockMvc.perform(post(ApiConstants.SAVE_USER)
+        mockMvc.perform(post(BASE_URL+SAVE_USER)
                         .content(TestUtil.asJsonString(userDAO))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest());
@@ -117,7 +116,7 @@ class UserEntityControllerTest {
 
         when(userServiceMock.saveUser(any())).thenReturn(DummyUserEntity.createUserEntity());
 
-        mockMvc.perform(post(ApiConstants.SAVE_USER)
+        mockMvc.perform(post(BASE_URL+SAVE_USER)
                         .content(TestUtil.asJsonString(userDAO))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isCreated());
@@ -132,7 +131,7 @@ class UserEntityControllerTest {
         userDAO.setVorname("Martin");
         userDAO.setEMail("example.com");
 
-        mockMvc.perform(post(ApiConstants.SAVE_USER)
+        mockMvc.perform(post(BASE_URL+SAVE_USER)
                         .content(TestUtil.asJsonString(userDAO))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest());
@@ -148,7 +147,7 @@ class UserEntityControllerTest {
 
         when(userServiceMock.saveUser(any())).thenReturn(DummyUserEntity.createUserEntity());
 
-        mockMvc.perform(post(ApiConstants.SAVE_USER)
+        mockMvc.perform(post(BASE_URL+SAVE_USER)
                         .content(userDAO.toString())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isCreated());
@@ -165,7 +164,7 @@ class UserEntityControllerTest {
 
         when(userServiceMock.saveUser(any())).thenThrow(new EntityExistsException(""));
 
-        mockMvc.perform(post(ApiConstants.SAVE_USER)
+        mockMvc.perform(post(BASE_URL+SAVE_USER)
                         .content(userDAO.toString())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().is5xxServerError());
@@ -174,22 +173,24 @@ class UserEntityControllerTest {
     @Test
     @DisplayName("Response should be a List of users.")
     void findAllUsersTest() throws Exception {
-        when(userServiceMock.findAllUsers()).thenReturn(List.of(DummyUserEntity.createUserEntity()));
+        Page<UserEntity> page =  new PageImpl<>(List.of(DummyUserEntity.createUserEntity()));
+        when(userServiceMock.findAllUsersWithPagination(anyInt(), anyInt(), any())).thenReturn(page);
 
-        mockMvc.perform(get(ApiConstants.GET_USERS))
+        mockMvc.perform(get(BASE_URL+GET_USERS))
                 .andExpect(content().contentTypeCompatibleWith(MediaTypes.HAL_JSON))
                 .andExpect(status().isOk())
                 .andExpect(
-                        jsonPath("_embedded.userDTOList[0].name", is("Keßel"))
+                        jsonPath("_embedded.Users[0].name", is("Keßel"))
                 );
     }
 
     @Test
     @DisplayName("Empty list should return response status 'no content'.")
     void findAllUsersFromEmptyList() throws Exception {
-        when(userServiceMock.findAllUsers()).thenReturn(List.of());
+        Page<UserEntity> page =  new PageImpl<>(List.of());
+        when(userServiceMock.findAllUsersWithPagination(anyInt(), anyInt(), any())).thenReturn(page);
 
-        mockMvc.perform(get(ApiConstants.GET_USERS))
+        mockMvc.perform(get(BASE_URL+GET_USERS))
                 .andExpect(content().contentTypeCompatibleWith(MediaTypes.HAL_JSON))
                 .andExpect(status().isNoContent());
     }
@@ -199,7 +200,7 @@ class UserEntityControllerTest {
     void findUserById() throws Exception {
         when(userServiceMock.findUserById(any())).thenReturn(Optional.of(DummyUserEntity.createUserEntity()));
 
-        mockMvc.perform(get(ApiConstants.FIND_USER_BY_ID, 1))
+        mockMvc.perform(get(BASE_URL+FIND_USER_BY_ID, 1))
                 .andExpect(status().isOk())
                 .andExpectAll(
                         content().json("{'name':'Keßel'}")
@@ -211,7 +212,7 @@ class UserEntityControllerTest {
     void findUserByIdEmptyResult() throws Exception {
         when(userServiceMock.findUserById(any())).thenReturn(Optional.empty());
 
-        mockMvc.perform(get(ApiConstants.FIND_USER_BY_ID, 1))
+        mockMvc.perform(get(BASE_URL+FIND_USER_BY_ID, 1))
                 .andExpect(status().isNoContent());
     }
 
@@ -222,7 +223,7 @@ class UserEntityControllerTest {
                 .when(userServiceMock)
                 .findUserById(any());
 
-        mockMvc.perform(get(ApiConstants.FIND_USER_BY_ID,1))
+        mockMvc.perform(get(BASE_URL+FIND_USER_BY_ID,1))
                 .andExpect(status().is5xxServerError());
     }
 
@@ -233,7 +234,7 @@ class UserEntityControllerTest {
 
         doNothing().when(userServiceMock).deleteUser(any());
 
-        mockMvc.perform(delete(ApiConstants.DELETE_USER)
+        mockMvc.perform(delete(BASE_URL+DELETE_USER)
                         .content(mapper.writeValueAsString(userDTO))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
@@ -250,7 +251,7 @@ class UserEntityControllerTest {
 
         doThrow(new UserAppException("No object to delete.")).when(userServiceMock).deleteUser(any());
 
-        mockMvc.perform(delete(ApiConstants.DELETE_USER)
+        mockMvc.perform(delete(BASE_URL+DELETE_USER)
                         .content(userDTO.toString())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().is5xxServerError());
@@ -263,7 +264,7 @@ class UserEntityControllerTest {
 
         doNothing().when(userServiceMock).deleteUser(any());
 
-        mockMvc.perform(delete(ApiConstants.DELETE_USER_BY_ID, 1)
+        mockMvc.perform(delete(BASE_URL+DELETE_USER_BY_ID, 1)
                         .content(mapper.writeValueAsString(userDTO))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
@@ -275,7 +276,7 @@ class UserEntityControllerTest {
 
         doThrow(new UserAppException("")).when(userServiceMock).deleteUserById(any());
 
-        mockMvc.perform(delete(ApiConstants.DELETE_USER_BY_ID, 1)
+        mockMvc.perform(delete(BASE_URL+DELETE_USER_BY_ID, 1)
                         .content(mapper.writeValueAsString(userDTO))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().is5xxServerError());
@@ -289,7 +290,7 @@ class UserEntityControllerTest {
 
         when(userServiceMock.updateUser(any())).thenReturn(DummyUserEntity.createUserEntity());
 
-        mockMvc.perform(put(ApiConstants.UPDATE_USER)
+        mockMvc.perform(put(BASE_URL+UPDATE_USER)
                         .content(mapper.writeValueAsString(userDTO))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
@@ -302,7 +303,7 @@ class UserEntityControllerTest {
 
         doThrow(new UserAppException("")).when(userServiceMock).updateUser(any());
 
-        mockMvc.perform(put(ApiConstants.UPDATE_USER)
+        mockMvc.perform(put(BASE_URL+UPDATE_USER)
                         .content(mapper.writeValueAsString(userDTO))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().is5xxServerError());
@@ -315,7 +316,7 @@ class UserEntityControllerTest {
         when(userServiceMock.findByVorname("Martin"))
                 .thenReturn(List.of(DummyUserEntity.createUserEntity()));
 
-        mockMvc.perform(get(ApiConstants.FIND_USER_BY_VORNAME).param("vorname", "Martin")
+        mockMvc.perform(get(BASE_URL+FIND_USER_BY_VORNAME).param("vorname", "Martin")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpectAll(
@@ -330,7 +331,7 @@ class UserEntityControllerTest {
         when(userServiceMock.findByVorname("Martin"))
                 .thenReturn(List.of());
 
-        mockMvc.perform(get(ApiConstants.FIND_USER_BY_VORNAME).param("vorname", "Martin")
+        mockMvc.perform(get(BASE_URL+FIND_USER_BY_VORNAME).param("vorname", "Martin")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());
     }

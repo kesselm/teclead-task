@@ -6,6 +6,10 @@ import com.example.tecleadtask.repositories.UserRepository;
 import jakarta.persistence.EntityExistsException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -31,9 +35,16 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public Page<UserEntity> findAllUsersWithPagination(int page, int size, Sort sort) {
+        Pageable pageable = PageRequest.of(page, size, sort);
+        return userRepository.findAll(pageable);
+    }
+
+    @Override
     public List<UserEntity> findAllUsers() {
         return userRepository.findAll();
     }
+
 
     @Override
     public Optional<UserEntity> findUserById(Long id) {
