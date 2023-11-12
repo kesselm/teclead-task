@@ -21,6 +21,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.hateoas.MediaTypes;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -42,7 +44,6 @@ class UserEntityControllerTest {
 
     @MockBean
     private UserService userServiceMock;
-
     private final WebApplicationContext context;
     private MockMvc mockMvc;
     private final ObjectMapper mapper = new ObjectMapper();
@@ -176,7 +177,7 @@ class UserEntityControllerTest {
         Page<UserEntity> page =  new PageImpl<>(List.of(DummyUserEntity.createUserEntity()));
         when(userServiceMock.findAllUsersWithPagination(anyInt(), anyInt(), any())).thenReturn(page);
 
-        mockMvc.perform(get(BASE_URL+GET_USERS))
+        mockMvc.perform(get(BASE_URL+ FIND_USERS))
                 .andExpect(content().contentTypeCompatibleWith(MediaTypes.HAL_JSON))
                 .andExpect(status().isOk())
                 .andExpect(
@@ -190,7 +191,7 @@ class UserEntityControllerTest {
         Page<UserEntity> page =  new PageImpl<>(List.of());
         when(userServiceMock.findAllUsersWithPagination(anyInt(), anyInt(), any())).thenReturn(page);
 
-        mockMvc.perform(get(BASE_URL+GET_USERS))
+        mockMvc.perform(get(BASE_URL+ FIND_USERS))
                 .andExpect(content().contentTypeCompatibleWith(MediaTypes.HAL_JSON))
                 .andExpect(status().isNoContent());
     }

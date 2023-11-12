@@ -27,7 +27,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Optional;
 
-import static com.example.tecleadtask.util.ApiConstants.BASE_URL;
+import static com.example.tecleadtask.util.ApiConstants.*;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
@@ -51,7 +51,7 @@ public class UserController {
                     @ApiResponse(responseCode = "400", description = "Bad Request", content = @Content),
                     @ApiResponse(responseCode = "500", description = "Server Error", content = @Content),
             })
-    @PostMapping(ApiConstants.SAVE_USER)
+    @PostMapping(SAVE_USER)
     public HttpEntity<UserDTO> saveUser(@Valid @RequestBody UserDTO userDTO) {
         UserEntity userEntity = userService.saveUser(EntityConverter.convertFromUserDTO(userDTO));
         UserDTO userDto = EntityConverter.convertFromUserEntity(userEntity);
@@ -71,7 +71,7 @@ public class UserController {
                     }),
                     @ApiResponse(responseCode = "204", description = "No Content", content = @Content)
             })
-    @GetMapping(ApiConstants.GET_USERS)
+    @GetMapping(FIND_USERS)
     public ResponseEntity<CollectionModel<UserDTO>> findPaginatedUsers(@Parameter(description = "Number of the result set page.") @RequestParam(value = "page", defaultValue = "0") int page,
                                                                        @Parameter(description = "Number of results on the page.") @RequestParam(value = "size", defaultValue = "10") int size,
                                                                        @Parameter(description = "Field sort criteria.") @RequestParam(value = "field", defaultValue = "vorname") String field,
@@ -115,8 +115,8 @@ public class UserController {
                     @ApiResponse(responseCode = "204", description = "No Content", content = @Content),
                     @ApiResponse(responseCode = "500", description = "Server Error", content = @Content),
             })
-    @GetMapping(ApiConstants.FIND_USER_BY_ID)
-    public ResponseEntity<UserDTO> findUserById(@Parameter(description = "Id of user to be searched.") @PathVariable Long id) {
+    @GetMapping(FIND_USER_BY_ID)
+    public ResponseEntity<UserDTO> findUserById(@Parameter(description = "Id of user to be searched.") @PathVariable("id") Long id) {
         Optional<UserEntity> user = userService.findUserById(id);
 
         return user.map(value -> new ResponseEntity<>(EntityConverter.convertFromUserEntity(value), HttpStatus.OK)).orElseGet(() -> new ResponseEntity<>(HttpStatus.NO_CONTENT));
