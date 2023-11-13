@@ -8,9 +8,9 @@ import io.swagger.v3.oas.models.media.*;
 import io.swagger.v3.oas.models.servers.Server;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
-import org.springframework.boot.configurationprocessor.json.JSONArray;
-import org.springframework.boot.configurationprocessor.json.JSONException;
-import org.springframework.boot.configurationprocessor.json.JSONObject;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
@@ -24,8 +24,6 @@ import java.util.Map;
 @EnableWebMvc
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 public class ApplicationConfig {
-
-    String serverAddress = "http://localhost";
 
     @Bean
     public WebMvcConfigurer corsConfigurer() {
@@ -71,11 +69,11 @@ public class ApplicationConfig {
                 .addProperty("_links", new JsonSchema().example(links.toString()));
 
         var devServer = new Server();
-        devServer.setUrl(serverAddress + ":8080");
+        devServer.setUrl("http://localhost:8080");
         devServer.setDescription("Server URL in Development environment");
 
         var prodServer = new Server();
-        prodServer.setUrl(serverAddress + ":9090");
+        prodServer.setUrl("http://localhost:9090");
         prodServer.setDescription("Server URL in Production environment");
 
         var contact = new Contact();

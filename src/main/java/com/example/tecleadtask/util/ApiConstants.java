@@ -6,7 +6,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class ApiConstants {
 
-    public static final String BASE_URL = "/api/va1/";
+    public static final String BASE_URL = "/api/v1/";
     public static final String SAVE_USER = "/user";
     public static final String FIND_USERS = "/users";
     public static final String FIND_USER_BY_ID = "/users/{id}";
