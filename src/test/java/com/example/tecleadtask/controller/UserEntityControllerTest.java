@@ -4,6 +4,7 @@ import com.example.tecleadtask.controllers.UserController;
 import com.example.tecleadtask.dto.UserDTO;
 import com.example.tecleadtask.entities.UserEntity;
 import com.example.tecleadtask.exception.UserAppException;
+import com.example.tecleadtask.hateoas.UserModelAssembler;
 import com.example.tecleadtask.services.UserService;
 import com.example.tecleadtask.util.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -15,14 +16,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.hateoas.MediaTypes;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -40,10 +41,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @ExtendWith(SpringExtension.class)
 @WebMvcTest(UserController.class)
+@Import(UserModelAssembler.class)
 class UserEntityControllerTest {
 
     @MockBean
     private UserService userServiceMock;
+
+    @Autowired
+    private UserModelAssembler userModelAssemblerMock;
+
     private final WebApplicationContext context;
     private MockMvc mockMvc;
     private final ObjectMapper mapper = new ObjectMapper();
@@ -175,7 +181,9 @@ class UserEntityControllerTest {
     @DisplayName("Response should be a List of users.")
     void findAllUsersTest() throws Exception {
         Page<UserEntity> page =  new PageImpl<>(List.of(DummyUserEntity.createUserEntity()));
+       // PagedModel<UserDTO> pageModel = PagedModel.of(page.get)
         when(userServiceMock.findAllUsersWithPagination(anyInt(), anyInt(), any())).thenReturn(page);
+     //   when(userModelAssemblerMock.toPagedModel(any())).thenReturn(pageModel);
 
         mockMvc.perform(get(BASE_URL+ FIND_USERS))
                 .andExpect(content().contentTypeCompatibleWith(MediaTypes.HAL_JSON))
@@ -229,7 +237,7 @@ class UserEntityControllerTest {
     }
 
     @Test
-    @DisplayName("Response should be 'ok'.")
+    @DisplayName("Response should be 'no content'.")
     void deleteUserSuccessful() throws Exception {
         UserDTO userDTO = EntityConverter.convertFromUserEntity(DummyUserEntity.createUserEntity());
 
@@ -238,11 +246,11 @@ class UserEntityControllerTest {
         mockMvc.perform(delete(BASE_URL+DELETE_USER)
                         .content(mapper.writeValueAsString(userDTO))
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
+                .andExpect(status().isNoContent());
     }
 
     @Test
-    @DisplayName("No user to delete, response should be 'no content'.")
+    @DisplayName("No user to delete, response should be 'server error'.")
     void deleteUserWithUnknownUser() throws Exception {
 
         var userDTO = new JSONObject();
@@ -259,7 +267,7 @@ class UserEntityControllerTest {
     }
 
     @Test
-    @DisplayName("Response should be 'is ok'.")
+    @DisplayName("Response should be 'no content'.")
     void deleteUserById() throws Exception {
         UserDTO userDTO = EntityConverter.convertFromUserEntity(DummyUserEntity.createUserEntity());
 
@@ -268,7 +276,7 @@ class UserEntityControllerTest {
         mockMvc.perform(delete(BASE_URL+DELETE_USER_BY_ID, 1)
                         .content(mapper.writeValueAsString(userDTO))
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
+                .andExpect(status().isNoContent());
     }
 
     @Test

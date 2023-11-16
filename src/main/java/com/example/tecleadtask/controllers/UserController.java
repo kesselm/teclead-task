@@ -2,6 +2,7 @@ package com.example.tecleadtask.controllers;
 
 import com.example.tecleadtask.dto.UserDTO;
 import com.example.tecleadtask.entities.UserEntity;
+import com.example.tecleadtask.hateoas.UserModelAssembler;
 import com.example.tecleadtask.services.UserService;
 import com.example.tecleadtask.util.ApiConstants;
 import com.example.tecleadtask.util.EntityConverter;
@@ -17,7 +18,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
-import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.PagedModel;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -38,6 +39,7 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 public class UserController {
 
     private final UserService userService;
+    private final UserModelAssembler userModelAssembler;
 
     private final String host = "http://localhost:8080/api/v1/";
 
@@ -72,7 +74,7 @@ public class UserController {
                     @ApiResponse(responseCode = "204", description = "No Content", content = @Content)
             })
     @GetMapping(FIND_USERS)
-    public ResponseEntity<CollectionModel<UserDTO>> findPaginatedUsers(@Parameter(description = "Number of the result set page.") @RequestParam(value = "page", defaultValue = "0") int page,
+    public ResponseEntity<PagedModel<UserDTO>> findPaginatedUsers(@Parameter(description = "Number of the result set page.") @RequestParam(value = "page", defaultValue = "0") int page,
                                                                        @Parameter(description = "Number of results on the page.") @RequestParam(value = "size", defaultValue = "10") int size,
                                                                        @Parameter(description = "Field sort criteria.") @RequestParam(value = "field", defaultValue = "vorname") String field,
                                                                        @Parameter(description = "Sort algorithm.") @RequestParam(value = "sortAlg", defaultValue = "ASC") SortAlgorithm sortAlg) {
@@ -85,26 +87,18 @@ public class UserController {
         }
 
         Page<UserEntity> site = userService.findAllUsersWithPagination(page, size, sort);
-        int pageSizes = site.getTotalPages();
-        int preSite = page > 0 && page <= pageSizes ? page - 1 : page;
-        int nextSite = page < pageSizes - 1 ? page + 1 : page;
+        PagedModel<UserDTO> collectionModel = userModelAssembler.toPagedModel(site);
 
-        List<UserDTO> users = site
-                .stream()
-                .map(EntityConverter::convertFromUserEntity)
-                .toList()
-                .stream()
-                .map(userDto -> (UserDTO) userDto.add(linkTo(methodOn(UserController.class).findUserById(userDto.getId())).withRel("findUser"))).toList();
-
-        var collectionModel = CollectionModel.of(users);
-        collectionModel.add(linkTo(methodOn(UserController.class).findPaginatedUsers(preSite, size, field, sortAlg)).withRel("before"));
-        collectionModel.add(linkTo(methodOn(UserController.class).findPaginatedUsers(nextSite, size, field, sortAlg)).withRel("next"));
-
-        if (!users.isEmpty()) {
+        if (site.getTotalElements() >= 1) {
             return ResponseEntity.ok(collectionModel);
         } else {
             return new ResponseEntity<>(collectionModel, HttpStatus.NO_CONTENT);
         }
+    }
+
+    @GetMapping("/get")
+    public List<UserEntity> getAll() {
+        return userService.findAllUsers();
     }
 
     @Operation(
@@ -126,12 +120,13 @@ public class UserController {
             summary = "Delete an user.",
             description = "Delete a user.",
             responses = {
-                    @ApiResponse(responseCode = "200", content = {@Content(schema = @Schema(implementation = UserDTO.class), mediaType = "application/json")}),
+                    @ApiResponse(responseCode = "204", description = "No Content", content = {@Content(schema = @Schema(implementation = UserDTO.class), mediaType = "application/json")}),
                     @ApiResponse(responseCode = "500", description = "Server Error", content = @Content)
             })
     @DeleteMapping(ApiConstants.DELETE_USER)
-    public void deleteUser(@RequestBody UserDTO userDTO) {
+    public ResponseEntity deleteUser(@RequestBody UserDTO userDTO) {
         userService.deleteUser(EntityConverter.convertFromUserDTO(userDTO));
+        return ResponseEntity.noContent().build();
     }
 
     @Operation(
@@ -142,15 +137,16 @@ public class UserController {
                     @ApiResponse(responseCode = "500", description = "Server Error", content = @Content),
             })
     @DeleteMapping(ApiConstants.DELETE_USER_BY_ID)
-    public void deleteUserById(@Parameter(description = "Id of user to be searched.") @PathVariable Long id) {
+    public ResponseEntity deleteUserById(@Parameter(description = "Id of user to be searched.") @PathVariable Long id) {
         userService.deleteUserById(id);
+        return ResponseEntity.noContent().build();
     }
 
     @Operation(
             summary = "Update an user.",
             description = "Update an user.",
             responses = {
-                    @ApiResponse(responseCode = "200", content = {@Content(schema =
+                    @ApiResponse(responseCode = "204", description = "No Content", content = {@Content(schema =
                     @Schema(implementation = UserDTO.class), mediaType = "application/json")}),
                     @ApiResponse(responseCode = "500", description = "Server Error", content = @Content),
             })
