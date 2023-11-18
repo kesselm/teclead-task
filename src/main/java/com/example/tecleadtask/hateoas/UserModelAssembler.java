@@ -30,12 +30,13 @@ public class UserModelAssembler implements RepresentationModelAssembler<UserEnti
         userModel.add(linkTo(methodOn(UserController.class).findUserById(userModel.getId())).withRel("findUser").withType("GET"));
         userModel.add(linkTo(methodOn(UserController.class).deleteUserById(userModel.getId())).withRel("deleteUser").withType("DELETE"));
         userModel.add(linkTo(methodOn(UserController.class).updateUser(userModel)).withRel("updateUser").withType("PUT"));
+        userModel.add(linkTo(methodOn(UserController.class).findByVornamen(userEntity.getVorname())).withRel("findUserByVorname").withType("GET"));
         return userModel;
     }
 
     public CollectionModel<UserDTO> toCollectionModel(CollectionModel<UserDTO> collectionModel){
         UserDTO userDTO = new UserDTO();
-        collectionModel.add(linkTo(methodOn(UserController.class).updateUser(userDTO)).withRel("updateUser").withType("PUT"));
+        collectionModel.add(linkTo(methodOn(UserController.class).saveUser(userDTO)).withRel("saveUser").withType("POST"));
         return collectionModel;
     }
 

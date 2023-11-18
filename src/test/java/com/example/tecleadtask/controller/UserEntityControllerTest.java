@@ -181,9 +181,7 @@ class UserEntityControllerTest {
     @DisplayName("Response should be a List of users.")
     void findAllUsersTest() throws Exception {
         Page<UserEntity> page =  new PageImpl<>(List.of(DummyUserEntity.createUserEntity()));
-       // PagedModel<UserDTO> pageModel = PagedModel.of(page.get)
         when(userServiceMock.findAllUsersWithPagination(anyInt(), anyInt(), any())).thenReturn(page);
-     //   when(userModelAssemblerMock.toPagedModel(any())).thenReturn(pageModel);
 
         mockMvc.perform(get(BASE_URL+ FIND_USERS))
                 .andExpect(content().contentTypeCompatibleWith(MediaTypes.HAL_JSON))
