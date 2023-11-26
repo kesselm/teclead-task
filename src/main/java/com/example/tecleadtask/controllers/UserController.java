@@ -31,6 +31,7 @@ import static com.example.tecleadtask.util.ApiConstants.*;
 
 @Tag(name = "Teclead Task Application", description = "An Application to find users.")
 @RestController
+@CrossOrigin(origins ="*")
 @RequiredArgsConstructor
 @RequestMapping(BASE_URL)
 public class UserController {
